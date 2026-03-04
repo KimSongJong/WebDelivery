@@ -1,0 +1,79 @@
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+} from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { v4 as uuidv4 } from 'uuid';
+import { Voucher } from '../../entities/voucher.entity';
+import { CreateVoucherDto } from './dto/create-voucher.dto';
+import { VoucherResponseDto } from './dto/voucher-response.dto';
+
+@Injectable()
+export class VouchersService {
+  constructor(
+    @InjectRepository(Voucher)
+    private readonly voucherRepository: Repository<Voucher>,
+  ) {}
+
+  async findAll(): Promise<VoucherResponseDto[]> {
+    const vouchers = await this.voucherRepository.find();
+    return vouchers.map((v) => this.toDto(v));
+  }
+
+  async findByCode(code: string): Promise<VoucherResponseDto> {
+    const voucher = await this.voucherRepository.findOne({ where: { code } });
+    if (!voucher) throw new NotFoundException(`Voucher "${code}" not found`);
+    return this.toDto(voucher);
+  }
+
+  async create(dto: CreateVoucherDto): Promise<VoucherResponseDto> {
+    const existing = await this.voucherRepository.findOne({
+      where: { code: dto.code },
+    });
+    if (existing) throw new ConflictException('Voucher code already exists');
+
+    const voucher = this.voucherRepository.create({
+      voucher_id: uuidv4().replace(/-/g, '').substring(0, 10),
+      code: dto.code,
+      description: dto.description ?? null,
+      discount_type: dto.discount_type,
+      discount_value: dto.discount_value,
+      max_discount_amount: dto.max_discount_amount ?? null,
+      min_order_value: dto.min_order_value ?? 0,
+      start_date: dto.start_date ? new Date(dto.start_date) : null,
+      end_date: dto.end_date ? new Date(dto.end_date) : null,
+      is_active: dto.is_active ?? true,
+    });
+
+    const saved = await this.voucherRepository.save(voucher);
+    return this.toDto(saved);
+  }
+
+  async deactivate(id: string): Promise<VoucherResponseDto> {
+    const voucher = await this.voucherRepository.findOne({
+      where: { voucher_id: id },
+    });
+    if (!voucher) throw new NotFoundException(`Voucher ${id} not found`);
+    voucher.is_active = false;
+    const updated = await this.voucherRepository.save(voucher);
+    return this.toDto(updated);
+  }
+
+  private toDto(v: Voucher): VoucherResponseDto {
+    return {
+      voucher_id: v.voucher_id,
+      code: v.code,
+      description: v.description,
+      discount_type: v.discount_type,
+      discount_value: Number(v.discount_value),
+      max_discount_amount: v.max_discount_amount !== null ? Number(v.max_discount_amount) : null,
+      min_order_value: Number(v.min_order_value),
+      start_date: v.start_date,
+      end_date: v.end_date,
+      is_active: v.is_active,
+      created_at: v.created_at,
+    };
+  }
+}
