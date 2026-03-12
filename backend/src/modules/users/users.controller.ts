@@ -21,6 +21,10 @@ import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles, Role } from '../../common/decorators/roles.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { User } from '../../entities/user.entity';
+import { PaginatedUserDto } from './dto/paginated-user.dto';
+import { QueryUserDto } from './dto/query-user.dto';
+import { Query } from '@nestjs/common';
+
 
 @ApiTags('Users')
 @ApiBearerAuth()
@@ -32,9 +36,9 @@ export class UsersController {
   @Get()
   @Roles(Role.ADMIN)
   @ApiOperation({ summary: '[Admin] Lấy danh sách tất cả người dùng' })
-  @ApiResponse({ status: 200, type: [UserResponseDto] })
-  findAll(): Promise<UserResponseDto[]> {
-    return this.usersService.findAll();
+  @ApiResponse({ status: 200, type: PaginatedUserDto })
+  findAll(@Query() query: QueryUserDto): Promise<PaginatedUserDto> {
+    return this.usersService.findAll(query);
   }
 
   @Get('me')

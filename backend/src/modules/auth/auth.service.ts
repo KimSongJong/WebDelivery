@@ -13,6 +13,8 @@ import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { AuthResponseDto } from './dto/auth-response.dto';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
+import { ChangePasswordDto } from './dto/change-password.dto';
+import { RefreshTokenDto } from './dto/refresh-token.dto';
 
 @Injectable()
 export class AuthService {
@@ -44,10 +46,11 @@ export class AuthService {
     });
 
     const savedUser = await this.userRepository.save(user);
-    const token = this.generateToken(savedUser);
+    const token = this.generateTokens(savedUser);
 
     return {
-      access_token: token,
+      access_token: token.access_token,
+      refresh_token: token.refresh_token,
       user_id: savedUser.user_id,
       email: savedUser.email,
       name: savedUser.name,
@@ -72,22 +75,66 @@ export class AuthService {
       throw new UnauthorizedException('Invalid email or password');
     }
 
-    const token = this.generateToken(user);
+    const token = this.generateTokens(user);
 
     return {
-      access_token: token,
+      access_token: token.access_token,
+      refresh_token: token.refresh_token,
       user_id: user.user_id,
       email: user.email,
       name: user.name,
     };
   }
+  async changePassword(userId: string , dto: ChangePasswordDto): Promise<{ message: string }> {
+    // Tìm người dùng theo userId
+    const user = await this.userRepository.findOne({where: {user_id: userId}});
+    // Nếu không tìm thấy người dùng, trả về lỗi
+    if(!user){
+      throw new UnauthorizedException('Người dùng không tồn tại');
+    }
+    // kiểm tra mật khâu hiện tại có đúng không
+    const isCurrentPasswordValid = await bcrypt.compare(dto.current_password , user.password_hash);
+    if(!isCurrentPasswordValid){
+      throw new UnauthorizedException('Mật khẩu hiện tại không đúng');
+    }
+    // Mã hóa mật khẩu mới
+    const saltRounds = 10;
+    const newPasswordHash = await bcrypt.hash(dto.new_password , saltRounds);
+    // Cập nhật mật khẩu mới cho người dùng
+    user.password_hash = newPasswordHash;
+    await this.userRepository.save(user);
+    // Trả về thông báo thành công
+    return {message: 'Đổi mật khẩu thành công'}
+  }
 
-  private generateToken(user: User): string {
+  async refreshToken(dto: RefreshTokenDto): Promise<{ access_token: string , refresh_token: string }> {
+    try {
+      const payload = this.jwtService.verify(dto.refresh_token);// Xác minh refresh token có hợp lệ hay ko
+    const user = await this.userRepository.findOne({where: {user_id: payload.sub}}); // Tìm người dùng theo user_id trong payload
+    if(!user){
+      throw new UnauthorizedException('Người dùng không tồn tại');
+    }
+    // tạo token mới
+    return this.generateTokens(user);
+    } catch (error) {
+      throw new UnauthorizedException('Refresh token không hợp lệ hoặc đã hết hạn');
+    }
+
+
+  }
+
+  private generateTokens(user: User): { access_token: string , refresh_token: string } {
     const payload: JwtPayload = {
       sub: user.user_id,
       email: user.email,
       role: 'USER',
     };
-    return this.jwtService.sign(payload);
+    // Access token: hết hạn sau 15 phút
+    const access_token = this.jwtService.sign(payload, { expiresIn: '15m' });
+    // Refresh token: hết hạn sau 7 ngày
+    const refresh_token = this.jwtService.sign(payload, { expiresIn: '7d' });
+    // Trả về cả access token và refresh token
+    return { access_token, refresh_token };
   }
+  
 }

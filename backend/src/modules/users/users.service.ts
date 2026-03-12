@@ -8,6 +8,9 @@ import { Repository } from 'typeorm';
 import { User } from '../../entities/user.entity';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserResponseDto } from './dto/user-response.dto';
+import { Like } from 'typeorm';
+import { QueryUserDto } from './dto/query-user.dto';
+import { PaginatedUserDto } from './dto/paginated-user.dto';
 
 @Injectable()
 export class UsersService {
@@ -16,9 +19,26 @@ export class UsersService {
     private readonly userRepository: Repository<User>,
   ) {}
 
-  async findAll(): Promise<UserResponseDto[]> {
-    const users = await this.userRepository.find();
-    return users.map((u) => this.toResponseDto(u));
+  async findAll(query: QueryUserDto): Promise<PaginatedUserDto> {
+    const { search, page = 1, limit = 10} = query;
+
+    const skip = (page - 1) * limit;
+    
+    const where = search ? { name: Like(`%${search}%`) } : {};
+
+    const [users, total] = await this.userRepository.findAndCount({
+      where,
+      skip,
+      take: limit,
+    });
+    return { 
+      data: users.map(user => this.toResponseDto(user)),
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
+
   }
 
   async findOne(id: string): Promise<UserResponseDto> {
