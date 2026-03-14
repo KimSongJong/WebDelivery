@@ -1,11 +1,9 @@
 import { SetMetadata } from '@nestjs/common';
+import { UserRole } from '../../entities/user.entity';
 
-export enum Role {
-  USER = 'USER',
-  ADMIN = 'ADMIN',
-  DRIVER = 'DRIVER',
-  RESTAURANT_OWNER = 'RESTAURANT_OWNER',
-}
+// Re-export UserRole as Role for backward compatibility
+export const Role = UserRole;
+export type Role = UserRole;
 
 export const ROLES_KEY = 'roles';
-export const Roles = (...roles: Role[]) => SetMetadata(ROLES_KEY, roles);
+export const Roles = (...roles: UserRole[]) => SetMetadata(ROLES_KEY, roles);

@@ -47,8 +47,8 @@ export class OrdersController {
   }
 
   @Patch(':id/status')
-  @Roles(Role.ADMIN, Role.DRIVER, Role.RESTAURANT_OWNER)
-  @ApiOperation({ summary: '[Admin/Driver/Restaurant] Cập nhật trạng thái đơn hàng' })
+  @Roles(Role.ADMIN)
+  @ApiOperation({ summary: '[Admin] Cập nhật trạng thái đơn hàng' })
   updateStatus(
     @Param('id') id: string,
     @Body() dto: UpdateOrderStatusDto,

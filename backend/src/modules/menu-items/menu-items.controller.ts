@@ -42,14 +42,14 @@ export class MenuItemsController {
   }
 
   @Post()
-  @Roles(Role.ADMIN, Role.RESTAURANT_OWNER)
+  @Roles(Role.ADMIN)
   @ApiOperation({ summary: 'Thêm món ăn mới' })
   create(@Body() dto: CreateMenuItemDto): Promise<MenuItemResponseDto> {
     return this.menuItemsService.create(dto);
   }
 
   @Patch(':id')
-  @Roles(Role.ADMIN, Role.RESTAURANT_OWNER)
+  @Roles(Role.ADMIN)
   @ApiOperation({ summary: 'Cập nhật món ăn' })
   update(
     @Param('id') id: string,
@@ -59,7 +59,7 @@ export class MenuItemsController {
   }
 
   @Delete(':id')
-  @Roles(Role.ADMIN, Role.RESTAURANT_OWNER)
+  @Roles(Role.ADMIN)
   @ApiOperation({ summary: 'Xóa món ăn' })
   remove(@Param('id') id: string): Promise<{ message: string }> {
     return this.menuItemsService.remove(id);

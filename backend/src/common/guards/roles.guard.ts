@@ -1,10 +1,10 @@
 import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { ROLES_KEY, Role } from '../decorators/roles.decorator';
-import { User } from '../../entities/user.entity';
+import { ROLES_KEY } from '../decorators/roles.decorator';
+import { User, UserRole } from '../../entities/user.entity';
 
 interface RequestWithUser {
-  user: User & { role?: Role };
+  user: User;
 }
 
 @Injectable()
@@ -12,7 +12,7 @@ export class RolesGuard implements CanActivate {
   constructor(private readonly reflector: Reflector) {}
 
   canActivate(context: ExecutionContext): boolean {
-    const requiredRoles = this.reflector.getAllAndOverride<Role[]>(ROLES_KEY, [
+    const requiredRoles = this.reflector.getAllAndOverride<UserRole[]>(ROLES_KEY, [
       context.getHandler(),
       context.getClass(),
     ]);
