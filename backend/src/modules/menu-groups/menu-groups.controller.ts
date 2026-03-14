@@ -43,7 +43,7 @@ export class MenuGroupsController {
   }
 
   @Post()
-  @Roles(Role.ADMIN, Role.RESTAURANT_OWNER)
+  @Roles(Role.ADMIN)
   @ApiOperation({ summary: 'Tạo nhóm menu mới' })
   create(
     @Body() dto: CreateMenuGroupDto,
@@ -52,7 +52,7 @@ export class MenuGroupsController {
   }
 
   @Patch(':id')
-  @Roles(Role.ADMIN, Role.RESTAURANT_OWNER)
+  @Roles(Role.ADMIN)
   @ApiOperation({ summary: 'Đổi tên nhóm menu' })
   update(
     @Param('id') id: string,
@@ -62,7 +62,7 @@ export class MenuGroupsController {
   }
 
   @Delete(':id')
-  @Roles(Role.ADMIN, Role.RESTAURANT_OWNER)
+  @Roles(Role.ADMIN)
   @ApiOperation({ summary: 'Xóa nhóm menu' })
   remove(@Param('id') id: string): Promise<{ message: string }> {
     return this.menuGroupsService.remove(id);

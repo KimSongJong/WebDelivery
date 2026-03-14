@@ -16,6 +16,7 @@ const mockUser: Partial<User> = {
 const mockUserRepository = {
   find: jest.fn(),
   findOne: jest.fn(),
+  findAndCount: jest.fn(),
   save: jest.fn(),
   remove: jest.fn(),
 };
@@ -37,10 +38,10 @@ describe('UsersService', () => {
 
   describe('findAll', () => {
     it('should return array of users', async () => {
-      mockUserRepository.find.mockResolvedValue([mockUser]);
-      const result = await service.findAll();
-      expect(result).toHaveLength(1);
-      expect(result[0].user_id).toBe('U001');
+      mockUserRepository.findAndCount.mockResolvedValue([[mockUser], 1]);
+      const result = await service.findAll({});
+      expect(result.data).toHaveLength(1);
+      expect(result.data[0].user_id).toBe('U001');
     });
   });
 
