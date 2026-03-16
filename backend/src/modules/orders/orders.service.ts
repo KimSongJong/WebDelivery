@@ -2,17 +2,17 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
-} from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource } from 'typeorm';
-import { v4 as uuidv4 } from 'uuid';
-import { Order, OrderStatus } from '../../entities/order.entity';
-import { OrderDetail } from '../../entities/order-detail.entity';
-import { MenuItem } from '../../entities/menu-item.entity';
-import { Voucher, DiscountType } from '../../entities/voucher.entity';
-import { CreateOrderDto } from './dto/create-order.dto';
-import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
-import { OrderResponseDto, OrderDetailItemDto } from './dto/order-response.dto';
+} from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository, DataSource } from "typeorm";
+import { v4 as uuidv4 } from "uuid";
+import { Order, OrderStatus } from "../../entities/order.entity";
+import { OrderDetail } from "../../entities/order-detail.entity";
+import { MenuItem } from "../../entities/menu-item.entity";
+import { Voucher, DiscountType } from "../../entities/voucher.entity";
+import { CreateOrderDto } from "./dto/create-order.dto";
+import { UpdateOrderStatusDto } from "./dto/update-order-status.dto";
+import { OrderResponseDto, OrderDetailItemDto } from "./dto/order-response.dto";
 
 @Injectable()
 export class OrdersService {
@@ -28,23 +28,20 @@ export class OrdersService {
     private readonly dataSource: DataSource,
   ) {}
 
-  async create(
-    userId: string,
-    dto: CreateOrderDto,
-  ): Promise<OrderResponseDto> {
+  async create(userId: string, dto: CreateOrderDto): Promise<OrderResponseDto> {
     return this.dataSource.transaction(async (manager) => {
       // Validate and load items
       const itemIds = dto.items.map((i) => i.item_id);
       const menuItems = await manager.findByIds(MenuItem, itemIds);
 
       if (menuItems.length !== itemIds.length) {
-        throw new BadRequestException('One or more menu items not found');
+        throw new BadRequestException("One or more menu items not found");
       }
 
       const unavailable = menuItems.filter((m) => !m.is_available);
       if (unavailable.length > 0) {
         throw new BadRequestException(
-          `Items not available: ${unavailable.map((m) => m.name).join(', ')}`,
+          `Items not available: ${unavailable.map((m) => m.name).join(", ")}`,
         );
       }
 
@@ -67,7 +64,7 @@ export class OrdersService {
         });
 
         if (!voucher) {
-          throw new BadRequestException('Voucher not found or inactive');
+          throw new BadRequestException("Voucher not found or inactive");
         }
 
         const now = new Date();
@@ -75,7 +72,7 @@ export class OrdersService {
           (voucher.start_date && now < voucher.start_date) ||
           (voucher.end_date && now > voucher.end_date)
         ) {
-          throw new BadRequestException('Voucher expired or not yet valid');
+          throw new BadRequestException("Voucher expired or not yet valid");
         }
 
         if (totalAmount < Number(voucher.min_order_value)) {
@@ -99,7 +96,7 @@ export class OrdersService {
 
       // Create order
       const order = manager.create(Order, {
-        order_id: uuidv4().replace(/-/g, '').substring(0, 10),
+        order_id: uuidv4().replace(/-/g, "").substring(0, 10),
         user_id: userId,
         restaurant_id: dto.restaurant_id,
         voucher_id: dto.voucher_id ?? null,
@@ -113,7 +110,7 @@ export class OrdersService {
       for (const orderItem of dto.items) {
         const menuItem = itemMap.get(orderItem.item_id)!;
         const detail = manager.create(OrderDetail, {
-          id: uuidv4().replace(/-/g, '').substring(0, 10),
+          id: uuidv4().replace(/-/g, "").substring(0, 10),
           order_id: savedOrder.order_id,
           item_id: orderItem.item_id,
           quantity: orderItem.quantity,
@@ -122,20 +119,32 @@ export class OrdersService {
         await manager.save(OrderDetail, detail);
       }
 
-      return this.toDto(savedOrder, dto.items.map((oi) => ({
-        item_id: oi.item_id,
-        name: itemMap.get(oi.item_id)!.name,
-        quantity: oi.quantity,
-        price_at_order: Number(itemMap.get(oi.item_id)!.price),
-      })));
+      //Nếu voucher được sử dụng, cập nhật thống kê
+      if (savedOrder.voucher_id) {
+        await this.updateVoucherStatistics(
+          savedOrder.voucher_id,
+          savedOrder.discount_amount,
+          savedOrder.created_at,
+        );
+      }
+
+      return this.toDto(
+        savedOrder,
+        dto.items.map((oi) => ({
+          item_id: oi.item_id,
+          name: itemMap.get(oi.item_id)!.name,
+          quantity: oi.quantity,
+          price_at_order: Number(itemMap.get(oi.item_id)!.price),
+        })),
+      );
     });
   }
 
   async findAllByUser(userId: string): Promise<OrderResponseDto[]> {
     const orders = await this.orderRepository.find({
       where: { user_id: userId },
-      relations: ['orderDetails', 'orderDetails.menuItem'],
-      order: { created_at: 'DESC' },
+      relations: ["orderDetails", "orderDetails.menuItem"],
+      order: { created_at: "DESC" },
     });
     return orders.map((o) => this.toDto(o, this.mapDetails(o)));
   }
@@ -143,7 +152,7 @@ export class OrdersService {
   async findOne(orderId: string): Promise<OrderResponseDto> {
     const order = await this.orderRepository.findOne({
       where: { order_id: orderId },
-      relations: ['orderDetails', 'orderDetails.menuItem'],
+      relations: ["orderDetails", "orderDetails.menuItem"],
     });
     if (!order) throw new NotFoundException(`Order ${orderId} not found`);
     return this.toDto(order, this.mapDetails(order));
@@ -155,7 +164,7 @@ export class OrdersService {
   ): Promise<OrderResponseDto> {
     const order = await this.orderRepository.findOne({
       where: { order_id: orderId },
-      relations: ['orderDetails', 'orderDetails.menuItem'],
+      relations: ["orderDetails", "orderDetails.menuItem"],
     });
     if (!order) throw new NotFoundException(`Order ${orderId} not found`);
 
@@ -177,10 +186,30 @@ export class OrdersService {
     if (!order.orderDetails) return [];
     return order.orderDetails.map((d) => ({
       item_id: d.item_id,
-      name: d.menuItem?.name ?? '',
+      name: d.menuItem?.name ?? "",
       quantity: d.quantity,
       price_at_order: Number(d.price_at_order),
     }));
+  }
+
+  private async updateVoucherStatistics(
+    voucherId: string,
+    discountAmount: number,
+    usedDate: Date,
+  ) {
+    const voucher = await this.voucherRepository.findOne({
+      where: { voucher_id: voucherId },
+    });
+    if (!voucher) return;
+
+    voucher.total_used += 1;
+    voucher.total_discount += discountAmount;
+
+    if (!voucher.first_used_date) {
+      voucher.first_used_date = usedDate;
+    }
+    voucher.last_used_date = usedDate;
+    await this.voucherRepository.save(voucher);
   }
 
   private toDto(order: Order, items: OrderDetailItemDto[]): OrderResponseDto {
