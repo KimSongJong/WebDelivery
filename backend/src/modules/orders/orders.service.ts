@@ -29,6 +29,17 @@ export class OrdersService {
   ) {}
 
   async create(userId: string, dto: CreateOrderDto): Promise<OrderResponseDto> {
+    // Pre-validate voucher BEFORE transaction to avoid lock timeout
+    let voucherPreCheck: Voucher | null = null;
+    if (dto.voucher_id) {
+      voucherPreCheck = await this.voucherRepository.findOne({
+        where: { voucher_id: dto.voucher_id, is_active: true },
+      });
+      if (!voucherPreCheck) {
+        throw new BadRequestException("Voucher not found or inactive");
+      }
+    }
+
     return this.dataSource.transaction(async (manager) => {
       // Validate and load items
       const itemIds = dto.items.map((i) => i.item_id);
@@ -54,19 +65,11 @@ export class OrdersService {
         totalAmount += Number(menuItem.price) * orderItem.quantity;
       }
 
-      // Apply voucher
+      // Apply voucher (use pre-checked voucher)
       let discountAmount = 0;
-      let voucher: Voucher | null = null;
+      let voucher: Voucher | null = voucherPreCheck;
 
-      if (dto.voucher_id) {
-        voucher = await manager.findOne(Voucher, {
-          where: { voucher_id: dto.voucher_id, is_active: true },
-        });
-
-        if (!voucher) {
-          throw new BadRequestException("Voucher not found or inactive");
-        }
-
+      if (voucher) {
         const now = new Date();
         if (
           (voucher.start_date && now < voucher.start_date) ||
@@ -122,6 +125,7 @@ export class OrdersService {
       //Nếu voucher được sử dụng, cập nhật thống kê
       if (savedOrder.voucher_id) {
         await this.updateVoucherStatistics(
+          manager,
           savedOrder.voucher_id,
           savedOrder.discount_amount,
           savedOrder.created_at,
@@ -138,6 +142,37 @@ export class OrdersService {
         })),
       );
     });
+  }
+
+  async findAll(
+    page: number = 1,
+    limit: number = 20,
+    status?: string,
+  ): Promise<any> {
+    const skip = (page - 1) * limit;
+    const queryBuilder = this.orderRepository
+      .createQueryBuilder('order')
+      .leftJoinAndSelect('order.orderDetails', 'orderDetails')
+      .leftJoinAndSelect('orderDetails.menuItem', 'menuItem')
+      .skip(skip)
+      .take(limit)
+      .orderBy('order.created_at', 'DESC');
+
+    if (status) {
+      queryBuilder.where('order.status = :status', { status });
+    }
+
+    const [orders, total] = await queryBuilder.getManyAndCount();
+
+    return {
+      data: orders.map((o) => this.toDto(o, this.mapDetails(o))),
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
   }
 
   async findAllByUser(userId: string): Promise<OrderResponseDto[]> {
@@ -193,23 +228,32 @@ export class OrdersService {
   }
 
   private async updateVoucherStatistics(
+    manager: any,
     voucherId: string,
     discountAmount: number,
     usedDate: Date,
   ) {
-    const voucher = await this.voucherRepository.findOne({
+    // Get the voucher repository through the manager
+    const voucherRepository = manager.getRepository(Voucher);
+    
+    // Fetch voucher
+    const voucher = await voucherRepository.findOne({
       where: { voucher_id: voucherId },
     });
+    
     if (!voucher) return;
 
-    voucher.total_used += 1;
-    voucher.total_discount += discountAmount;
-
+    // Update statistics
+    voucher.total_used = (voucher.total_used || 0) + 1;
+    voucher.total_discount = (Number(voucher.total_discount) || 0) + discountAmount;
+    
     if (!voucher.first_used_date) {
       voucher.first_used_date = usedDate;
     }
     voucher.last_used_date = usedDate;
-    await this.voucherRepository.save(voucher);
+
+    // Save updated voucher
+    await voucherRepository.save(voucher);
   }
 
   private toDto(order: Order, items: OrderDetailItemDto[]): OrderResponseDto {

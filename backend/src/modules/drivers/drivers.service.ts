@@ -15,13 +15,15 @@ export class DriversService {
   ) {}
 
   async findAll(): Promise<DriverResponseDto[]> {
-    const drivers = await this.driverRepository.find();
+    const drivers = await this.driverRepository.find({
+      where: { is_active: true },
+    });
     return drivers.map((d) => this.toDto(d));
   }
 
   async findOne(id: string): Promise<DriverResponseDto> {
     const driver = await this.driverRepository.findOne({
-      where: { driver_id: id },
+      where: { driver_id: id, is_active: true },
     });
     if (!driver) throw new NotFoundException(`Driver ${id} not found`);
     return this.toDto(driver);
@@ -48,11 +50,12 @@ export class DriversService {
 
   async remove(id: string): Promise<{ message: string }> {
     const driver = await this.driverRepository.findOne({
-      where: { driver_id: id },
+      where: { driver_id: id, is_active: true },
     });
     if (!driver) throw new NotFoundException(`Driver ${id} not found`);
-    await this.driverRepository.remove(driver);
-    return { message: `Driver ${id} deleted` };
+    driver.is_active = false;
+    await this.driverRepository.save(driver);
+    return { message: `Driver ${id} deactivated successfully` };
   }
 
   private toDto(driver: Driver): DriverResponseDto {

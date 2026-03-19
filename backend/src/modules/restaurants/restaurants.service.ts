@@ -58,8 +58,9 @@ export class RestaurantsService {
       where: { restaurant_id: id },
     });
     if (!restaurant) throw new NotFoundException(`Restaurant ${id} not found`);
-    await this.restaurantRepository.remove(restaurant);
-    return { message: `Restaurant ${id} deleted` };
+    restaurant.is_open = false;
+    await this.restaurantRepository.save(restaurant);
+    return { message: `Restaurant ${id} deactivated successfully` };
   }
 
   private toDto(r: Restaurant): RestaurantResponseDto {

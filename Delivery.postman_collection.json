@@ -1,687 +1,225 @@
 {
   "info": {
-    "name": "ShopeeFood API",
-    "_postman_id": "shopeefood-col-001",
-    "description": "Complete API collection for ShopeeFood delivery system. Base URL: {{baseUrl}}\n\n**Quick Start:**\n1. Import this collection + the Environment file\n2. Select env \"ShopeeFood Local\"\n3. Run **Auth / Register** or **Auth / Login** → token is saved automatically\n4. All other requests use {{accessToken}} automatically",
+    "name": "Delivery API - Complete",
+    "_postman_id": "delivery-col-20260317",
+    "description": "Role-aware collection matching current NestJS code.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
-  },
-  "auth": {
-    "type": "bearer",
-    "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }]
   },
   "item": [
     {
-      "name": "01 - Auth",
-      "description": "Register & Login. Token is auto-saved to {{accessToken}} after each call.",
+      "name": "00 - Auth Setup",
       "item": [
         {
-          "name": "Register",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "const r = pm.response.json();",
-                  "if (r.data && r.data.access_token) {",
-                  "    pm.environment.set('accessToken', r.data.access_token);",
-                  "    pm.environment.set('userId', r.data.user_id);",
-                  "    console.log('Token saved:', r.data.access_token.substring(0,20) + '...');",
-                  "}",
-                  "pm.test('Status 201', () => pm.response.to.have.status(201));",
-                  "pm.test('Has access_token', () => pm.expect(r.data.access_token).to.be.a('string'));"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
+          "name": "Register Customer",
           "request": {
             "auth": { "type": "noauth" },
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Nguyen Van A\",\n  \"email\": \"user1@gmail.com\",\n  \"password\": \"123456\"\n}"
+              "raw": "{\n  \"name\": \"Customer One\",\n  \"email\": \"{{customerEmail}}\",\n  \"password\": \"{{customerPassword}}\",\n  \"phone_number\": \"0901234567\",\n  \"default_address\": \"123 Nguyen Hue, Q1\",\n  \"role\": \"customer\"\n}"
             },
             "url": { "raw": "{{baseUrl}}/auth/register", "host": ["{{baseUrl}}"], "path": ["auth", "register"] }
-          }
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["let r = {}; try { r = pm.response.json(); } catch(e) {}","if (r.data && r.data.access_token) {","pm.environment.set('customerToken', r.data.access_token);","pm.environment.set('customerRefreshToken', r.data.refresh_token || '');","pm.environment.set('customerUserId', r.data.user_id || '');","pm.environment.set('targetUserId', r.data.user_id || '');","}"] } }]
         },
         {
-          "name": "Login",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "const r = pm.response.json();",
-                  "if (r.data && r.data.access_token) {",
-                  "    pm.environment.set('accessToken', r.data.access_token);",
-                  "    pm.environment.set('userId', r.data.user_id);",
-                  "    console.log('Token saved:', r.data.access_token.substring(0,20) + '...');",
-                  "}",
-                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
-                  "pm.test('Has access_token', () => pm.expect(r.data.access_token).to.be.a('string'));"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
+          "name": "Register Admin",
           "request": {
             "auth": { "type": "noauth" },
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"user1@gmail.com\",\n  \"password\": \"123456\"\n}"
+              "raw": "{\n  \"name\": \"Admin One\",\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\",\n  \"phone_number\": \"0912345678\",\n  \"role\": \"admin\"\n}"
             },
+            "url": { "raw": "{{baseUrl}}/auth/register", "host": ["{{baseUrl}}"], "path": ["auth", "register"] }
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["let r = {}; try { r = pm.response.json(); } catch(e) {}","if (r.data && r.data.access_token) {","pm.environment.set('adminToken', r.data.access_token);","pm.environment.set('adminRefreshToken', r.data.refresh_token || '');","pm.environment.set('adminUserId', r.data.user_id || '');","}"] } }]
+        },
+        {
+          "name": "Login Customer",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{customerEmail}}\",\n  \"password\": \"{{customerPassword}}\"\n}" },
             "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] }
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["const r = pm.response.json();","pm.environment.set('customerToken', r.data.access_token);","pm.environment.set('customerRefreshToken', r.data.refresh_token || '');","pm.environment.set('customerUserId', r.data.user_id || '');","pm.environment.set('targetUserId', r.data.user_id || '');"] } }]
+        },
+        {
+          "name": "Login Admin",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}" },
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] }
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["const r = pm.response.json();","pm.environment.set('adminToken', r.data.access_token);","pm.environment.set('adminRefreshToken', r.data.refresh_token || '');","pm.environment.set('adminUserId', r.data.user_id || '');"] } }]
+        },
+        {
+          "name": "Refresh Token (Customer)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"refresh_token\": \"{{customerRefreshToken}}\"\n}" },
+            "url": { "raw": "{{baseUrl}}/auth/refresh", "host": ["{{baseUrl}}"], "path": ["auth", "refresh"] }
           }
         }
       ]
     },
     {
-      "name": "02 - Users",
+      "name": "01 - Public",
+      "item": [
+        { "name": "Get Restaurants", "request": { "auth": { "type": "noauth" }, "method": "GET", "url": { "raw": "{{baseUrl}}/restaurants", "host": ["{{baseUrl}}"], "path": ["restaurants"] } } },
+        { "name": "Get Restaurant By ID", "request": { "auth": { "type": "noauth" }, "method": "GET", "url": { "raw": "{{baseUrl}}/restaurants/{{restaurantId}}", "host": ["{{baseUrl}}"], "path": ["restaurants", "{{restaurantId}}"] } } },
+        { "name": "Get Menu Groups By Restaurant", "request": { "auth": { "type": "noauth" }, "method": "GET", "url": { "raw": "{{baseUrl}}/menu-groups/by-restaurant/{{restaurantId}}", "host": ["{{baseUrl}}"], "path": ["menu-groups", "by-restaurant", "{{restaurantId}}"] } } },
+        { "name": "Get Menu Items By Restaurant", "request": { "auth": { "type": "noauth" }, "method": "GET", "url": { "raw": "{{baseUrl}}/menu-items/by-restaurant/{{restaurantId}}", "host": ["{{baseUrl}}"], "path": ["menu-items", "by-restaurant", "{{restaurantId}}"] } } },
+        { "name": "Get Menu Item By ID", "request": { "auth": { "type": "noauth" }, "method": "GET", "url": { "raw": "{{baseUrl}}/menu-items/{{menuItemId}}", "host": ["{{baseUrl}}"], "path": ["menu-items", "{{menuItemId}}"] } } },
+        { "name": "Check Voucher By Code", "request": { "auth": { "type": "noauth" }, "method": "GET", "url": { "raw": "{{baseUrl}}/vouchers/check?code=SAVE30K", "host": ["{{baseUrl}}"], "path": ["vouchers", "check"], "query": [{ "key": "code", "value": "SAVE30K" }] } } }
+      ]
+    },
+    {
+      "name": "02 - Customer",
+      "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{customerToken}}", "type": "string" }] },
       "item": [
         {
-          "name": "Get All Users",
-          "request": {
-            "method": "GET",
-            "url": { "raw": "{{baseUrl}}/users", "host": ["{{baseUrl}}"], "path": ["users"] }
-          }
+          "name": "Profile",
+          "item": [
+            { "name": "Get My Profile", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/users/me", "host": ["{{baseUrl}}"], "path": ["users", "me"] } } },
+            { "name": "Update My Profile", "request": { "method": "PATCH", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"name\": \"Customer Updated\",\n  \"phone_number\": \"0908889999\",\n  \"default_address\": \"45 Le Loi\"\n}" }, "url": { "raw": "{{baseUrl}}/users/me", "host": ["{{baseUrl}}"], "path": ["users", "me"] } } },
+            { "name": "Change Password", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"current_password\": \"{{customerPassword}}\",\n  \"new_password\": \"1234567\"\n}" }, "url": { "raw": "{{baseUrl}}/auth/change-password", "host": ["{{baseUrl}}"], "path": ["auth", "change-password"] } } }
+          ]
         },
         {
-          "name": "Get My Profile",
-          "request": {
-            "method": "GET",
-            "url": { "raw": "{{baseUrl}}/users/me", "host": ["{{baseUrl}}"], "path": ["users", "me"] }
-          }
+          "name": "Orders",
+          "item": [
+            { "name": "Create Order", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"restaurant_id\": \"{{restaurantId}}\",\n  \"items\": [\n    { \"item_id\": \"{{menuItemId}}\", \"quantity\": 1 }\n  ]\n}" }, "url": { "raw": "{{baseUrl}}/orders", "host": ["{{baseUrl}}"], "path": ["orders"] } }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["const r = pm.response.json();","if (r.data && r.data.order_id) pm.environment.set('orderId', r.data.order_id);"] } }] },
+            { "name": "Create Order With Voucher", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"restaurant_id\": \"{{restaurantId}}\",\n  \"voucher_id\": \"{{voucherId}}\",\n  \"items\": [\n    { \"item_id\": \"{{menuItemId}}\", \"quantity\": 2 }\n  ]\n}" }, "url": { "raw": "{{baseUrl}}/orders", "host": ["{{baseUrl}}"], "path": ["orders"] } }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["const r = pm.response.json();","if (r.data && r.data.order_id) pm.environment.set('orderId', r.data.order_id);"] } }] },
+            { "name": "Get My Orders", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/orders/my-orders", "host": ["{{baseUrl}}"], "path": ["orders", "my-orders"] } } },
+            { "name": "Get Order By ID", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/orders/{{orderId}}", "host": ["{{baseUrl}}"], "path": ["orders", "{{orderId}}"] } } }
+          ]
         },
         {
-          "name": "Update My Profile",
-          "request": {
-            "method": "PATCH",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Nguyen Van A Updated\",\n  \"phone_number\": \"0901234567\",\n  \"default_address\": \"123 Nguyen Hue, Q1, TP.HCM\"\n}"
-            },
-            "url": { "raw": "{{baseUrl}}/users/me", "host": ["{{baseUrl}}"], "path": ["users", "me"] }
-          }
+          "name": "Payments",
+          "item": [
+            { "name": "Create Payment", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"order_id\": \"{{orderId}}\",\n  \"payment_method\": \"CASH\"\n}" }, "url": { "raw": "{{baseUrl}}/payments", "host": ["{{baseUrl}}"], "path": ["payments"] } }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["const r = pm.response.json();","if (r.data && r.data.payment_id) pm.environment.set('paymentId', r.data.payment_id);"] } }] },
+            { "name": "Get Payment By Order", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/payments/by-order/{{orderId}}", "host": ["{{baseUrl}}"], "path": ["payments", "by-order", "{{orderId}}"] } } }
+          ]
         },
         {
-          "name": "Get User By ID",
-          "request": {
-            "method": "GET",
-            "url": { "raw": "{{baseUrl}}/users/{{userId}}", "host": ["{{baseUrl}}"], "path": ["users", "{{userId}}"] }
-          }
-        },
-        {
-          "name": "Delete User",
-          "request": {
-            "method": "DELETE",
-            "url": { "raw": "{{baseUrl}}/users/{{userId}}", "host": ["{{baseUrl}}"], "path": ["users", "{{userId}}"] }
-          }
+          "name": "Drivers",
+          "item": [
+            { "name": "Get Driver By ID", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/drivers/{{driverId}}", "host": ["{{baseUrl}}"], "path": ["drivers", "{{driverId}}"] } } }
+          ]
         }
       ]
     },
     {
-      "name": "03 - Drivers",
+      "name": "03 - Admin",
+      "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{adminToken}}", "type": "string" }] },
       "item": [
         {
-          "name": "Create Driver",
-          "event": [
+          "name": "Users Management",
+          "item": [
+            { "name": "Get All Users", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/users?page=1&limit=10&search=", "host": ["{{baseUrl}}"], "path": ["users"], "query": [{ "key": "page", "value": "1" }, { "key": "limit", "value": "10" }, { "key": "search", "value": "" }] } } },
+            { "name": "Get User By ID", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/users/{{targetUserId}}", "host": ["{{baseUrl}}"], "path": ["users", "{{targetUserId}}"] } } },
+            { "name": "Update User", "request": { "method": "PATCH", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"name\": \"Edited by admin\"\n}" }, "url": { "raw": "{{baseUrl}}/users/{{targetUserId}}", "host": ["{{baseUrl}}"], "path": ["users", "{{targetUserId}}"] } } },
+            { "name": "Activate User", "request": { "method": "PATCH", "url": { "raw": "{{baseUrl}}/users/{{targetUserId}}/activate", "host": ["{{baseUrl}}"], "path": ["users", "{{targetUserId}}", "activate"] } } },
+            { "name": "Deactivate User", "request": { "method": "PATCH", "url": { "raw": "{{baseUrl}}/users/{{targetUserId}}/deactivate", "host": ["{{baseUrl}}"], "path": ["users", "{{targetUserId}}", "deactivate"] } } },
+            { "name": "User Statistics", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/users/{{targetUserId}}/statistics", "host": ["{{baseUrl}}"], "path": ["users", "{{targetUserId}}", "statistics"] } } }
+          ]
+        },
+        {
+          "name": "Restaurants Management",
+          "item": [
+            { "name": "Create Restaurant", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"name\": \"Quan an admin\",\n  \"description\": \"Created by admin\",\n  \"address\": \"1 Nguyen Trai\",\n  \"res_lat\": 10.77,\n  \"res_long\": 106.69,\n  \"is_open\": true\n}" }, "url": { "raw": "{{baseUrl}}/restaurants", "host": ["{{baseUrl}}"], "path": ["restaurants"] } }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["const r = pm.response.json();","if (r.data && r.data.restaurant_id) pm.environment.set('restaurantId', r.data.restaurant_id);"] } }] },
+            { "name": "Update Restaurant", "request": { "method": "PATCH", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"description\": \"Updated by admin\",\n  \"is_open\": true\n}" }, "url": { "raw": "{{baseUrl}}/restaurants/{{restaurantId}}", "host": ["{{baseUrl}}"], "path": ["restaurants", "{{restaurantId}}"] } } },
+            { "name": "Delete Restaurant", "request": { "method": "DELETE", "url": { "raw": "{{baseUrl}}/restaurants/{{restaurantId}}", "host": ["{{baseUrl}}"], "path": ["restaurants", "{{restaurantId}}"] } } }
+          ]
+        },
+        {
+          "name": "Menu Management",
+          "item": [
             {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "const r = pm.response.json();",
-                  "if (r.data && r.data.driver_id) {",
-                  "    pm.environment.set('driverId', r.data.driver_id);",
-                  "    console.log('driverId saved:', r.data.driver_id);",
-                  "}",
-                  "pm.test('Status 201', () => pm.response.to.have.status(201));"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Tran Van Tài\",\n  \"phone_number\": \"0912345678\",\n  \"vehicle_info\": \"Honda Wave - 51A-12345\",\n  \"current_lat\": 10.7769,\n  \"current_long\": 106.7009,\n  \"is_active\": true\n}"
+              "name": "Menu Groups",
+              "item": [
+                { "name": "Create Menu Group", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"restaurant_id\": \"{{restaurantId}}\",\n  \"name\": \"Main dishes\"\n}" }, "url": { "raw": "{{baseUrl}}/menu-groups", "host": ["{{baseUrl}}"], "path": ["menu-groups"] } }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["const r = pm.response.json();","if (r.data && r.data.group_id) pm.environment.set('menuGroupId', r.data.group_id);"] } }] },
+                { "name": "Update Menu Group", "request": { "method": "PATCH", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"name\": \"Main dishes updated\"\n}" }, "url": { "raw": "{{baseUrl}}/menu-groups/{{menuGroupId}}", "host": ["{{baseUrl}}"], "path": ["menu-groups", "{{menuGroupId}}"] } } },
+                { "name": "Delete Menu Group", "request": { "method": "DELETE", "url": { "raw": "{{baseUrl}}/menu-groups/{{menuGroupId}}", "host": ["{{baseUrl}}"], "path": ["menu-groups", "{{menuGroupId}}"] } } }
+              ]
             },
-            "url": { "raw": "{{baseUrl}}/drivers", "host": ["{{baseUrl}}"], "path": ["drivers"] }
-          }
-        },
-        {
-          "name": "Get All Drivers",
-          "request": {
-            "method": "GET",
-            "url": { "raw": "{{baseUrl}}/drivers", "host": ["{{baseUrl}}"], "path": ["drivers"] }
-          }
-        },
-        {
-          "name": "Get Driver By ID",
-          "request": {
-            "method": "GET",
-            "url": { "raw": "{{baseUrl}}/drivers/{{driverId}}", "host": ["{{baseUrl}}"], "path": ["drivers", "{{driverId}}"] }
-          }
-        },
-        {
-          "name": "Update Driver",
-          "request": {
-            "method": "PATCH",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"is_active\": false,\n  \"current_lat\": 10.785,\n  \"current_long\": 106.712\n}"
-            },
-            "url": { "raw": "{{baseUrl}}/drivers/{{driverId}}", "host": ["{{baseUrl}}"], "path": ["drivers", "{{driverId}}"] }
-          }
-        },
-        {
-          "name": "Delete Driver",
-          "request": {
-            "method": "DELETE",
-            "url": { "raw": "{{baseUrl}}/drivers/{{driverId}}", "host": ["{{baseUrl}}"], "path": ["drivers", "{{driverId}}"] }
-          }
-        }
-      ]
-    },
-    {
-      "name": "04 - Restaurants",
-      "item": [
-        {
-          "name": "Create Restaurant",
-          "event": [
             {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "const r = pm.response.json();",
-                  "if (r.data && r.data.restaurant_id) {",
-                  "    pm.environment.set('restaurantId', r.data.restaurant_id);",
-                  "    console.log('restaurantId saved:', r.data.restaurant_id);",
-                  "}",
-                  "pm.test('Status 201', () => pm.response.to.have.status(201));"
-                ],
-                "type": "text/javascript"
-              }
+              "name": "Menu Items",
+              "item": [
+                { "name": "Create Menu Item (Simple)", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"restaurant_id\": \"{{restaurantId}}\",\n  \"name\": \"Com ga\",\n  \"description\": \"Com ga xoi mo\",\n  \"price\": 45000\n}" }, "url": { "raw": "{{baseUrl}}/menu-items", "host": ["{{baseUrl}}"], "path": ["menu-items"] } }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["const r = pm.response.json();","if (r.data && r.data.item_id) pm.environment.set('menuItemId', r.data.item_id);"] } }] },
+                { "name": "Create Menu Item (With Group)", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"restaurant_id\": \"{{restaurantId}}\",\n  \"menu_group_id\": \"{{menuGroupId}}\",\n  \"name\": \"Pho Bo\",\n  \"description\": \"Pho bo traditional\",\n  \"price\": 50000\n}" }, "url": { "raw": "{{baseUrl}}/menu-items", "host": ["{{baseUrl}}"], "path": ["menu-items"] } }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["const r = pm.response.json();","if (r.data && r.data.item_id) pm.environment.set('menuItemId', r.data.item_id);"] } }] },
+                { "name": "Update Menu Item", "request": { "method": "PATCH", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"price\": 49000,\n  \"is_available\": true\n}" }, "url": { "raw": "{{baseUrl}}/menu-items/{{menuItemId}}", "host": ["{{baseUrl}}"], "path": ["menu-items", "{{menuItemId}}"] } } },
+                { "name": "Delete Menu Item", "request": { "method": "DELETE", "url": { "raw": "{{baseUrl}}/menu-items/{{menuItemId}}", "host": ["{{baseUrl}}"], "path": ["menu-items", "{{menuItemId}}"] } } }
+              ]
             }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Bún Bò Huế Cô Ba\",\n  \"description\": \"Quán bún bò ngon nhất Huế\",\n  \"address\": \"45 Le Loi, Q1, TP.HCM\",\n  \"res_lat\": 10.7757,\n  \"res_long\": 106.7004,\n  \"is_open\": true\n}"
-            },
-            "url": { "raw": "{{baseUrl}}/restaurants", "host": ["{{baseUrl}}"], "path": ["restaurants"] }
-          }
+          ]
         },
         {
-          "name": "Get All Restaurants",
-          "request": {
-            "method": "GET",
-            "url": { "raw": "{{baseUrl}}/restaurants", "host": ["{{baseUrl}}"], "path": ["restaurants"] }
-          }
+          "name": "Drivers Management",
+          "item": [
+            { "name": "Create Driver", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"name\": \"Driver A\",\n  \"phone_number\": \"0934567890\",\n  \"vehicle_info\": \"Wave 51A-99999\",\n  \"current_lat\": 10.78,\n  \"current_long\": 106.70,\n  \"is_active\": true\n}" }, "url": { "raw": "{{baseUrl}}/drivers", "host": ["{{baseUrl}}"], "path": ["drivers"] } }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["const r = pm.response.json();","if (r.data && r.data.driver_id) pm.environment.set('driverId', r.data.driver_id);"] } }] },
+            { "name": "Get All Drivers", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/drivers", "host": ["{{baseUrl}}"], "path": ["drivers"] } } },
+            { "name": "Get Driver By ID", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/drivers/{{driverId}}", "host": ["{{baseUrl}}"], "path": ["drivers", "{{driverId}}"] } } },
+            { "name": "Update Driver", "request": { "method": "PATCH", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"is_active\": true,\n  \"vehicle_info\": \"Vision 59X3-12345\"\n}" }, "url": { "raw": "{{baseUrl}}/drivers/{{driverId}}", "host": ["{{baseUrl}}"], "path": ["drivers", "{{driverId}}"] } } },
+            { "name": "Delete Driver", "request": { "method": "DELETE", "url": { "raw": "{{baseUrl}}/drivers/{{driverId}}", "host": ["{{baseUrl}}"], "path": ["drivers", "{{driverId}}"] } } }
+          ]
         },
         {
-          "name": "Search Restaurants",
-          "request": {
-            "method": "GET",
-            "url": {
-              "raw": "{{baseUrl}}/restaurants?search=bún",
-              "host": ["{{baseUrl}}"],
-              "path": ["restaurants"],
-              "query": [{ "key": "search", "value": "bún" }]
-            }
-          }
+          "name": "Vouchers Management",
+          "item": [
+            { "name": "Create Voucher", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"code\": \"SAVE30K\",\n  \"description\": \"Discount 30k\",\n  \"discount_type\": \"FIXED\",\n  \"discount_value\": 30000,\n  \"min_order_value\": 100000,\n  \"start_date\": \"2026-01-01T00:00:00.000Z\",\n  \"end_date\": \"2026-12-31T23:59:59.000Z\",\n  \"is_active\": true\n}" }, "url": { "raw": "{{baseUrl}}/vouchers", "host": ["{{baseUrl}}"], "path": ["vouchers"] } }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["const r = pm.response.json();","if (r.data && r.data.voucher_id) pm.environment.set('voucherId', r.data.voucher_id);"] } }] },
+            { "name": "Get All Vouchers", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/vouchers?search=SAVE", "host": ["{{baseUrl}}"], "path": ["vouchers"], "query": [{ "key": "search", "value": "SAVE" }] } } },
+            { "name": "Update Voucher", "request": { "method": "PATCH", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"description\": \"Updated by admin\",\n  \"is_active\": true\n}" }, "url": { "raw": "{{baseUrl}}/vouchers/{{voucherId}}", "host": ["{{baseUrl}}"], "path": ["vouchers", "{{voucherId}}"] } } },
+            { "name": "Deactivate Voucher", "request": { "method": "PATCH", "url": { "raw": "{{baseUrl}}/vouchers/{{voucherId}}/deactivate", "host": ["{{baseUrl}}"], "path": ["vouchers", "{{voucherId}}", "deactivate"] } } },
+            { "name": "Activate Voucher", "request": { "method": "PATCH", "url": { "raw": "{{baseUrl}}/vouchers/{{voucherId}}/activate", "host": ["{{baseUrl}}"], "path": ["vouchers", "{{voucherId}}", "activate"] } } },
+            { "name": "Voucher Statistics", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/vouchers/{{voucherId}}/statistics", "host": ["{{baseUrl}}"], "path": ["vouchers", "{{voucherId}}", "statistics"] } } },
+            { "name": "Delete Voucher", "request": { "method": "DELETE", "url": { "raw": "{{baseUrl}}/vouchers/{{voucherId}}", "host": ["{{baseUrl}}"], "path": ["vouchers", "{{voucherId}}"] } } }
+          ]
         },
         {
-          "name": "Get Restaurant By ID",
-          "request": {
-            "method": "GET",
-            "url": { "raw": "{{baseUrl}}/restaurants/{{restaurantId}}", "host": ["{{baseUrl}}"], "path": ["restaurants", "{{restaurantId}}"] }
-          }
+          "name": "Orders Management",
+          "item": [
+            { "name": "Get All Orders", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/orders?page=1&limit=20&status=", "host": ["{{baseUrl}}"], "path": ["orders"], "query": [{ "key": "page", "value": "1" }, { "key": "limit", "value": "20" }, { "key": "status", "value": "" }] } } },
+            { "name": "Get Order By ID", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/orders/{{orderId}}", "host": ["{{baseUrl}}"], "path": ["orders", "{{orderId}}"] } } },
+            { "name": "Update Order Status", "request": { "method": "PATCH", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"status\": \"PICKING_UP\",\n  \"driver_id\": \"{{driverId}}\"\n}" }, "url": { "raw": "{{baseUrl}}/orders/{{orderId}}/status", "host": ["{{baseUrl}}"], "path": ["orders", "{{orderId}}", "status"] } } }
+          ]
         },
         {
-          "name": "Update Restaurant",
-          "request": {
-            "method": "PATCH",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"description\": \"Quán bún bò đặc biệt, nước dùng đậm đà\",\n  \"is_open\": true,\n  \"rating_average\": 4.5\n}"
-            },
-            "url": { "raw": "{{baseUrl}}/restaurants/{{restaurantId}}", "host": ["{{baseUrl}}"], "path": ["restaurants", "{{restaurantId}}"] }
-          }
-        },
-        {
-          "name": "Delete Restaurant",
-          "request": {
-            "method": "DELETE",
-            "url": { "raw": "{{baseUrl}}/restaurants/{{restaurantId}}", "host": ["{{baseUrl}}"], "path": ["restaurants", "{{restaurantId}}"] }
-          }
-        }
-      ]
-    },
-    {
-      "name": "05 - Menu Groups",
-      "item": [
-        {
-          "name": "Create Menu Group",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "const r = pm.response.json();",
-                  "if (r.data && r.data.group_id) {",
-                  "    pm.environment.set('menuGroupId', r.data.group_id);",
-                  "    console.log('menuGroupId saved:', r.data.group_id);",
-                  "}",
-                  "pm.test('Status 201', () => pm.response.to.have.status(201));"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"restaurant_id\": \"{{restaurantId}}\",\n  \"name\": \"Món chính\"\n}"
-            },
-            "url": { "raw": "{{baseUrl}}/menu-groups", "host": ["{{baseUrl}}"], "path": ["menu-groups"] }
-          }
-        },
-        {
-          "name": "Get Menu Groups By Restaurant",
-          "request": {
-            "method": "GET",
-            "url": { "raw": "{{baseUrl}}/menu-groups/by-restaurant/{{restaurantId}}", "host": ["{{baseUrl}}"], "path": ["menu-groups", "by-restaurant", "{{restaurantId}}"] }
-          }
-        },
-        {
-          "name": "Update Menu Group",
-          "request": {
-            "method": "PATCH",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"Món chính (updated)\"\n}"
-            },
-            "url": { "raw": "{{baseUrl}}/menu-groups/{{menuGroupId}}", "host": ["{{baseUrl}}"], "path": ["menu-groups", "{{menuGroupId}}"] }
-          }
-        },
-        {
-          "name": "Delete Menu Group",
-          "request": {
-            "method": "DELETE",
-            "url": { "raw": "{{baseUrl}}/menu-groups/{{menuGroupId}}", "host": ["{{baseUrl}}"], "path": ["menu-groups", "{{menuGroupId}}"] }
-          }
-        }
-      ]
-    },
-    {
-      "name": "06 - Menu Items",
-      "item": [
-        {
-          "name": "Create Menu Item",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "const r = pm.response.json();",
-                  "if (r.data && r.data.item_id) {",
-                  "    pm.environment.set('menuItemId', r.data.item_id);",
-                  "    console.log('menuItemId saved:', r.data.item_id);",
-                  "}",
-                  "pm.test('Status 201', () => pm.response.to.have.status(201));"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"restaurant_id\": \"{{restaurantId}}\",\n  \"menu_group_id\": \"{{menuGroupId}}\",\n  \"name\": \"Bún bò đặc biệt\",\n  \"description\": \"Bún bò Huế với giò heo và chả cua\",\n  \"price\": 65000,\n  \"is_available\": true\n}"
-            },
-            "url": { "raw": "{{baseUrl}}/menu-items", "host": ["{{baseUrl}}"], "path": ["menu-items"] }
-          }
-        },
-        {
-          "name": "Get Menu Items By Restaurant",
-          "request": {
-            "method": "GET",
-            "url": { "raw": "{{baseUrl}}/menu-items/by-restaurant/{{restaurantId}}", "host": ["{{baseUrl}}"], "path": ["menu-items", "by-restaurant", "{{restaurantId}}"] }
-          }
-        },
-        {
-          "name": "Get Menu Item By ID",
-          "request": {
-            "method": "GET",
-            "url": { "raw": "{{baseUrl}}/menu-items/{{menuItemId}}", "host": ["{{baseUrl}}"], "path": ["menu-items", "{{menuItemId}}"] }
-          }
-        },
-        {
-          "name": "Update Menu Item",
-          "request": {
-            "method": "PATCH",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"price\": 70000,\n  \"is_available\": true,\n  \"description\": \"Bún bò Huế đặc biệt SIZE XL\"\n}"
-            },
-            "url": { "raw": "{{baseUrl}}/menu-items/{{menuItemId}}", "host": ["{{baseUrl}}"], "path": ["menu-items", "{{menuItemId}}"] }
-          }
-        },
-        {
-          "name": "Delete Menu Item",
-          "request": {
-            "method": "DELETE",
-            "url": { "raw": "{{baseUrl}}/menu-items/{{menuItemId}}", "host": ["{{baseUrl}}"], "path": ["menu-items", "{{menuItemId}}"] }
-          }
-        }
-      ]
-    },
-    {
-      "name": "07 - Vouchers",
-      "item": [
-        {
-          "name": "Create Voucher",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "const r = pm.response.json();",
-                  "if (r.data && r.data.voucher_id) {",
-                  "    pm.environment.set('voucherId', r.data.voucher_id);",
-                  "    console.log('voucherId saved:', r.data.voucher_id);",
-                  "}",
-                  "pm.test('Status 201', () => pm.response.to.have.status(201));"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"code\": \"SAVE30K\",\n  \"description\": \"Giảm 30,000đ cho đơn từ 100,000đ\",\n  \"discount_type\": \"FIXED\",\n  \"discount_value\": 30000,\n  \"min_order_value\": 100000,\n  \"start_date\": \"2026-01-01T00:00:00.000Z\",\n  \"end_date\": \"2026-12-31T23:59:59.000Z\",\n  \"is_active\": true\n}"
-            },
-            "url": { "raw": "{{baseUrl}}/vouchers", "host": ["{{baseUrl}}"], "path": ["vouchers"] }
-          }
-        },
-        {
-          "name": "Create Voucher (% Discount)",
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"code\": \"SALE20PCT\",\n  \"description\": \"Giảm 20% tối đa 50,000đ\",\n  \"discount_type\": \"PERCENTAGE\",\n  \"discount_value\": 20,\n  \"max_discount_amount\": 50000,\n  \"min_order_value\": 50000,\n  \"start_date\": \"2026-01-01T00:00:00.000Z\",\n  \"end_date\": \"2026-12-31T23:59:59.000Z\",\n  \"is_active\": true\n}"
-            },
-            "url": { "raw": "{{baseUrl}}/vouchers", "host": ["{{baseUrl}}"], "path": ["vouchers"] }
-          }
-        },
-        {
-          "name": "Get All Vouchers",
-          "request": {
-            "method": "GET",
-            "url": { "raw": "{{baseUrl}}/vouchers", "host": ["{{baseUrl}}"], "path": ["vouchers"] }
-          }
-        },
-        {
-          "name": "Check Voucher By Code",
-          "request": {
-            "method": "GET",
-            "url": {
-              "raw": "{{baseUrl}}/vouchers/check?code=SAVE30K",
-              "host": ["{{baseUrl}}"],
-              "path": ["vouchers", "check"],
-              "query": [{ "key": "code", "value": "SAVE30K" }]
-            }
-          }
-        },
-        {
-          "name": "Deactivate Voucher",
-          "request": {
-            "method": "PATCH",
-            "url": { "raw": "{{baseUrl}}/vouchers/{{voucherId}}/deactivate", "host": ["{{baseUrl}}"], "path": ["vouchers", "{{voucherId}}", "deactivate"] }
-          }
-        }
-      ]
-    },
-    {
-      "name": "08 - Orders",
-      "item": [
-        {
-          "name": "Create Order (no voucher)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "const r = pm.response.json();",
-                  "if (r.data && r.data.order_id) {",
-                  "    pm.environment.set('orderId', r.data.order_id);",
-                  "    console.log('orderId saved:', r.data.order_id);",
-                  "}",
-                  "pm.test('Status 201', () => pm.response.to.have.status(201));"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"restaurant_id\": \"{{restaurantId}}\",\n  \"items\": [\n    { \"item_id\": \"{{menuItemId}}\", \"quantity\": 2 }\n  ]\n}"
-            },
-            "url": { "raw": "{{baseUrl}}/orders", "host": ["{{baseUrl}}"], "path": ["orders"] }
-          }
-        },
-        {
-          "name": "Create Order (with voucher)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "const r = pm.response.json();",
-                  "if (r.data && r.data.order_id) {",
-                  "    pm.environment.set('orderId', r.data.order_id);",
-                  "    console.log('orderId saved:', r.data.order_id);",
-                  "}",
-                  "pm.test('Status 201', () => pm.response.to.have.status(201));"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"restaurant_id\": \"{{restaurantId}}\",\n  \"voucher_id\": \"{{voucherId}}\",\n  \"items\": [\n    { \"item_id\": \"{{menuItemId}}\", \"quantity\": 3 }\n  ]\n}"
-            },
-            "url": { "raw": "{{baseUrl}}/orders", "host": ["{{baseUrl}}"], "path": ["orders"] }
-          }
-        },
-        {
-          "name": "Get My Orders",
-          "request": {
-            "method": "GET",
-            "url": { "raw": "{{baseUrl}}/orders/my-orders", "host": ["{{baseUrl}}"], "path": ["orders", "my-orders"] }
-          }
-        },
-        {
-          "name": "Get Order By ID",
-          "request": {
-            "method": "GET",
-            "url": { "raw": "{{baseUrl}}/orders/{{orderId}}", "host": ["{{baseUrl}}"], "path": ["orders", "{{orderId}}"] }
-          }
-        },
-        {
-          "name": "Update Order Status → CONFIRMED",
-          "request": {
-            "method": "PATCH",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"status\": \"CONFIRMED\"\n}"
-            },
-            "url": { "raw": "{{baseUrl}}/orders/{{orderId}}/status", "host": ["{{baseUrl}}"], "path": ["orders", "{{orderId}}", "status"] }
-          }
-        },
-        {
-          "name": "Update Order Status → DELIVERING",
-          "request": {
-            "method": "PATCH",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"status\": \"DELIVERING\"\n}"
-            },
-            "url": { "raw": "{{baseUrl}}/orders/{{orderId}}/status", "host": ["{{baseUrl}}"], "path": ["orders", "{{orderId}}", "status"] }
-          }
-        },
-        {
-          "name": "Update Order Status → DELIVERED",
-          "request": {
-            "method": "PATCH",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"status\": \"DELIVERED\"\n}"
-            },
-            "url": { "raw": "{{baseUrl}}/orders/{{orderId}}/status", "host": ["{{baseUrl}}"], "path": ["orders", "{{orderId}}", "status"] }
-          }
-        },
-        {
-          "name": "Update Order Status → CANCELLED",
-          "request": {
-            "method": "PATCH",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"status\": \"CANCELLED\"\n}"
-            },
-            "url": { "raw": "{{baseUrl}}/orders/{{orderId}}/status", "host": ["{{baseUrl}}"], "path": ["orders", "{{orderId}}", "status"] }
-          }
-        }
-      ]
-    },
-    {
-      "name": "09 - Payments",
-      "item": [
-        {
-          "name": "Create Payment (CASH)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "const r = pm.response.json();",
-                  "if (r.data && r.data.payment_id) {",
-                  "    pm.environment.set('paymentId', r.data.payment_id);",
-                  "    console.log('paymentId saved:', r.data.payment_id);",
-                  "}",
-                  "pm.test('Status 201', () => pm.response.to.have.status(201));"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"order_id\": \"{{orderId}}\",\n  \"payment_method\": \"CASH\"\n}"
-            },
-            "url": { "raw": "{{baseUrl}}/payments", "host": ["{{baseUrl}}"], "path": ["payments"] }
-          }
-        },
-        {
-          "name": "Create Payment (MOMO)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "const r = pm.response.json();",
-                  "if (r.data && r.data.payment_id) {",
-                  "    pm.environment.set('paymentId', r.data.payment_id);",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"order_id\": \"{{orderId}}\",\n  \"payment_method\": \"MOMO\"\n}"
-            },
-            "url": { "raw": "{{baseUrl}}/payments", "host": ["{{baseUrl}}"], "path": ["payments"] }
-          }
-        },
-        {
-          "name": "Create Payment (ZALOPAY)",
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"order_id\": \"{{orderId}}\",\n  \"payment_method\": \"ZALOPAY\"\n}"
-            },
-            "url": { "raw": "{{baseUrl}}/payments", "host": ["{{baseUrl}}"], "path": ["payments"] }
-          }
-        },
-        {
-          "name": "Create Payment (VNPAY)",
-          "request": {
-            "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"order_id\": \"{{orderId}}\",\n  \"payment_method\": \"VNPAY\"\n}"
-            },
-            "url": { "raw": "{{baseUrl}}/payments", "host": ["{{baseUrl}}"], "path": ["payments"] }
-          }
-        },
-        {
-          "name": "Get Payment By Order ID",
-          "request": {
-            "method": "GET",
-            "url": { "raw": "{{baseUrl}}/payments/by-order/{{orderId}}", "host": ["{{baseUrl}}"], "path": ["payments", "by-order", "{{orderId}}"] }
-          }
-        },
-        {
-          "name": "Confirm Payment",
-          "request": {
-            "method": "PATCH",
-            "url": { "raw": "{{baseUrl}}/payments/{{paymentId}}/confirm", "host": ["{{baseUrl}}"], "path": ["payments", "{{paymentId}}", "confirm"] }
-          }
+          "name": "Payments Management",
+          "item": [
+            { "name": "Get Payment By Order", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/payments/by-order/{{orderId}}", "host": ["{{baseUrl}}"], "path": ["payments", "by-order", "{{orderId}}"] } } },
+            { "name": "Confirm Payment", "request": { "method": "PATCH", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"confirmed\": true\n}" }, "url": { "raw": "{{baseUrl}}/payments/{{paymentId}}/confirm", "host": ["{{baseUrl}}"], "path": ["payments", "{{paymentId}}", "confirm"] } } }
+          ]
         }
       ]
     }
+  ],
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000/api/v1" },
+    { "key": "customerEmail", "value": "customer@test.com" },
+    { "key": "customerPassword", "value": "123456" },
+    { "key": "adminEmail", "value": "admin@test.com" },
+    { "key": "adminPassword", "value": "123456" },
+    { "key": "customerToken", "value": "" },
+    { "key": "adminToken", "value": "" },
+    { "key": "customerUserId", "value": "" },
+    { "key": "adminUserId", "value": "" },
+    { "key": "targetUserId", "value": "" },
+    { "key": "restaurantId", "value": "" },
+    { "key": "menuItemId", "value": "" },
+    { "key": "menuGroupId", "value": "" },
+    { "key": "driverId", "value": "" },
+    { "key": "voucherId", "value": "" },
+    { "key": "orderId", "value": "" },
+    { "key": "paymentId", "value": "" }
   ]
 }

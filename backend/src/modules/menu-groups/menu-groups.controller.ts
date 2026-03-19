@@ -27,7 +27,7 @@ class UpdateMenuGroupNameDto {
 }
 
 @ApiTags('Menu Groups')
-@ApiBearerAuth()
+@ApiBearerAuth('JWT-auth')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('menu-groups')
 export class MenuGroupsController {

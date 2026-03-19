@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 import { MenuItem } from '../../entities/menu-item.entity';
+import { MenuGroup } from '../../entities/menu-group.entity';
 import { CreateMenuItemDto } from './dto/create-menu-item.dto';
 import { UpdateMenuItemDto } from './dto/update-menu-item.dto';
 import { MenuItemResponseDto } from './dto/menu-item-response.dto';
@@ -12,6 +13,8 @@ export class MenuItemsService {
   constructor(
     @InjectRepository(MenuItem)
     private readonly menuItemRepository: Repository<MenuItem>,
+    @InjectRepository(MenuGroup)
+    private readonly menuGroupRepository: Repository<MenuGroup>,
   ) {}
 
   async findByRestaurant(restaurantId: string): Promise<MenuItemResponseDto[]> {
@@ -30,6 +33,18 @@ export class MenuItemsService {
   }
 
   async create(dto: CreateMenuItemDto): Promise<MenuItemResponseDto> {
+    // Validate menu_group_id if provided
+    if (dto.menu_group_id) {
+      const group = await this.menuGroupRepository.findOne({
+        where: { group_id: dto.menu_group_id },
+      });
+      if (!group) {
+        throw new NotFoundException(
+          `Menu group ${dto.menu_group_id} not found`,
+        );
+      }
+    }
+
     const item = this.menuItemRepository.create({
       item_id: uuidv4().replace(/-/g, '').substring(0, 10),
       is_available: dto.is_available ?? true,
@@ -45,6 +60,19 @@ export class MenuItemsService {
       where: { item_id: id },
     });
     if (!item) throw new NotFoundException(`Menu item ${id} not found`);
+
+    // Validate menu_group_id if provided
+    if (dto.menu_group_id) {
+      const group = await this.menuGroupRepository.findOne({
+        where: { group_id: dto.menu_group_id },
+      });
+      if (!group) {
+        throw new NotFoundException(
+          `Menu group ${dto.menu_group_id} not found`,
+        );
+      }
+    }
+
     Object.assign(item, dto);
     const updated = await this.menuItemRepository.save(item);
     return this.toDto(updated);
@@ -55,8 +83,9 @@ export class MenuItemsService {
       where: { item_id: id },
     });
     if (!item) throw new NotFoundException(`Menu item ${id} not found`);
-    await this.menuItemRepository.remove(item);
-    return { message: `Menu item ${id} deleted` };
+    item.is_available = false;
+    await this.menuItemRepository.save(item);
+    return { message: `Menu item ${id} deactivated successfully` };
   }
 
   private toDto(i: MenuItem): MenuItemResponseDto {

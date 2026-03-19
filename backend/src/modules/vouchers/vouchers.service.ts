@@ -21,14 +21,14 @@ export class VouchersService {
 
   async findAll(search?: string): Promise<VoucherResponseDto[]> {
     const where = search
-      ? [{ code: Like(`%${search}%`) }, { description: Like(`%${search}%`) }]
-      : {};
+      ? [{ code: Like(`%${search}%`), is_active: true }, { description: Like(`%${search}%`), is_active: true }]
+      : { is_active: true };
     const vouchers = await this.voucherRepository.find({ where });
     return vouchers.map((v) => this.toDto(v));
   }
 
   async findByCode(code: string): Promise<VoucherResponseDto> {
-    const voucher = await this.voucherRepository.findOne({ where: { code } });
+    const voucher = await this.voucherRepository.findOne({ where: { code, is_active: true } });
     if (!voucher) throw new NotFoundException(`Voucher "${code}" not found`);
     return this.toDto(voucher);
   }
@@ -103,12 +103,13 @@ export class VouchersService {
 
   async remove(id: string): Promise<{ message: string }> {
     const voucher = await this.voucherRepository.findOne({
-      where: { voucher_id: id },
+      where: { voucher_id: id, is_active: true },
     });
     if (!voucher) throw new NotFoundException(`Voucher ${id} not found`);
 
-    await this.voucherRepository.softRemove(voucher);
-    return { message: `Voucher ${voucher.code} removed successfully` };
+    voucher.is_active = false;
+    await this.voucherRepository.save(voucher);
+    return { message: `Voucher ${voucher.code} deactivated successfully` };
   }
 
   private toDto(v: Voucher): VoucherResponseDto {

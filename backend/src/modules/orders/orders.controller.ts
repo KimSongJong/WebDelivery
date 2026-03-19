@@ -6,6 +6,7 @@ import {
   Param,
   Body,
   UseGuards,
+  Query,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { OrdersService } from './orders.service';
@@ -19,7 +20,7 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { User } from '../../entities/user.entity';
 
 @ApiTags('Orders')
-@ApiBearerAuth()
+@ApiBearerAuth('JWT-auth')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('orders')
 export class OrdersController {
@@ -32,6 +33,21 @@ export class OrdersController {
     @Body() dto: CreateOrderDto,
   ): Promise<OrderResponseDto> {
     return this.ordersService.create(user.user_id, dto);
+  }
+
+  @Get()
+  @Roles(Role.ADMIN)
+  @ApiOperation({ summary: '[Admin] Lấy tất cả đơn hàng' })
+  findAll(
+    @Query('page') page: string = '1',
+    @Query('limit') limit: string = '20',
+    @Query('status') status: string = '',
+  ) {
+    return this.ordersService.findAll(
+      parseInt(page),
+      parseInt(limit),
+      status || undefined,
+    );
   }
 
   @Get('my-orders')
