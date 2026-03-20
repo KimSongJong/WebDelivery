@@ -29,10 +29,12 @@ export class RestaurantsController {
   @Get()
   @ApiOperation({ summary: 'Lấy danh sách nhà hàng (có thể tìm kiếm)' })
   @ApiQuery({ name: 'search', required: false })
+  @ApiQuery({ name: 'category_id', required: false })
   findAll(
     @Query('search') search?: string,
+    @Query('category_id') categoryId?: string,
   ): Promise<RestaurantResponseDto[]> {
-    return this.restaurantsService.findAll(search);
+    return this.restaurantsService.findAll(search, categoryId);
   }
 
   @Public()

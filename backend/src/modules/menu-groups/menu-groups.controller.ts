@@ -11,20 +11,12 @@ import {
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { MenuGroupsService } from './menu-groups.service';
 import { CreateMenuGroupDto } from './dto/create-menu-group.dto';
+import { UpdateMenuGroupDto } from './dto/update-menu-group.dto';
 import { MenuGroupResponseDto } from './dto/menu-group-response.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles, Role } from '../../common/decorators/roles.decorator';
 import { Public } from '../../common/decorators/public.decorator';
-import { IsString, IsNotEmpty } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
-
-class UpdateMenuGroupNameDto {
-  @ApiProperty()
-  @IsString()
-  @IsNotEmpty()
-  name: string;
-}
 
 @ApiTags('Menu Groups')
 @ApiBearerAuth()
@@ -42,6 +34,13 @@ export class MenuGroupsController {
     return this.menuGroupsService.findByRestaurant(restaurantId);
   }
 
+  @Public()
+  @Get(':id')
+  @ApiOperation({ summary: 'Lấy chi tiết nhóm menu' })
+  findOne(@Param('id') id: string): Promise<MenuGroupResponseDto> {
+    return this.menuGroupsService.findOne(id);
+  }
+
   @Post()
   @Roles(Role.ADMIN)
   @ApiOperation({ summary: 'Tạo nhóm menu mới' })
@@ -56,7 +55,7 @@ export class MenuGroupsController {
   @ApiOperation({ summary: 'Đổi tên nhóm menu' })
   update(
     @Param('id') id: string,
-    @Body() dto: UpdateMenuGroupNameDto,
+    @Body() dto: UpdateMenuGroupDto,
   ): Promise<MenuGroupResponseDto> {
     return this.menuGroupsService.update(id, dto.name);
   }

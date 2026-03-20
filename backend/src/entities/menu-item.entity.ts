@@ -5,6 +5,7 @@ import {
   ManyToOne,
   OneToMany,
   JoinColumn,
+  DeleteDateColumn,
 } from 'typeorm';
 import { Restaurant } from './restaurant.entity';
 import { MenuGroup } from './menu-group.entity';
@@ -46,4 +47,7 @@ export class MenuItem {
 
   @OneToMany(() => OrderDetail, (detail) => detail.menuItem)
   orderDetails: OrderDetail[];
+
+  @DeleteDateColumn({ type: 'datetime', nullable: true })
+  deleted_at: Date | null;
 }
