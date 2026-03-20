@@ -26,7 +26,7 @@ import { QueryUserDto } from "./dto/query-user.dto";
 import { Query } from "@nestjs/common";
 
 @ApiTags("Users")
-@ApiBearerAuth()
+@ApiBearerAuth('JWT-auth')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller("users")
 export class UsersController {

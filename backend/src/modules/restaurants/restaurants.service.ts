@@ -120,6 +120,7 @@ export class RestaurantsService {
     });
 
     return { message: `Restaurant ${id} soft deleted` };
+
   }
 
   private toDto(r: Restaurant): RestaurantResponseDto {

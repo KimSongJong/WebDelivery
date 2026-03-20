@@ -26,7 +26,7 @@ import { UpdateVoucherDto } from "./dto/update_voucher.dto";
 import { VoucherStatisticsDto } from "./dto/voucher-statistics.dto";
 
 @ApiTags("Vouchers")
-@ApiBearerAuth()
+@ApiBearerAuth('JWT-auth')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller("vouchers")
 export class VouchersController {

@@ -40,6 +40,7 @@ export class MenuItemsService {
   }
 
   async create(dto: CreateMenuItemDto): Promise<MenuItemResponseDto> {
+
     await this.validateRestaurant(dto.restaurant_id);
     await this.validateMenuGroup(dto.restaurant_id, dto.menu_group_id);
 
@@ -59,12 +60,14 @@ export class MenuItemsService {
     });
     if (!item) throw new NotFoundException(`Menu item ${id} not found`);
 
+
     const restaurantId = dto.restaurant_id ?? item.restaurant_id;
     const menuGroupId =
       dto.menu_group_id !== undefined ? dto.menu_group_id : item.menu_group_id;
 
     await this.validateRestaurant(restaurantId);
     await this.validateMenuGroup(restaurantId, menuGroupId);
+
 
     Object.assign(item, dto);
     const updated = await this.menuItemRepository.save(item);

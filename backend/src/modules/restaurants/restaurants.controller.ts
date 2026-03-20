@@ -44,7 +44,7 @@ export class RestaurantsController {
     return this.restaurantsService.findOne(id);
   }
 
-  @ApiBearerAuth()
+  @ApiBearerAuth('JWT-auth')
   @Post()
   @Roles(Role.ADMIN)
   @ApiOperation({ summary: '[Admin] Tạo nhà hàng mới' })
@@ -52,7 +52,7 @@ export class RestaurantsController {
     return this.restaurantsService.create(dto);
   }
 
-  @ApiBearerAuth()
+  @ApiBearerAuth('JWT-auth')
   @Patch(':id')
   @Roles(Role.ADMIN)
   @ApiOperation({ summary: '[Admin] Cập nhật nhà hàng' })
@@ -63,7 +63,7 @@ export class RestaurantsController {
     return this.restaurantsService.update(id, dto);
   }
 
-  @ApiBearerAuth()
+  @ApiBearerAuth('JWT-auth')
   @Delete(':id')
   @Roles(Role.ADMIN)
   @ApiOperation({ summary: '[Admin] Xóa nhà hàng' })

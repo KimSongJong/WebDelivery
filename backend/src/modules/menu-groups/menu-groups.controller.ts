@@ -19,7 +19,7 @@ import { Roles, Role } from '../../common/decorators/roles.decorator';
 import { Public } from '../../common/decorators/public.decorator';
 
 @ApiTags('Menu Groups')
-@ApiBearerAuth()
+@ApiBearerAuth('JWT-auth')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('menu-groups')
 export class MenuGroupsController {
