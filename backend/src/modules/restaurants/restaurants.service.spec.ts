@@ -12,7 +12,6 @@ const mockRestaurant: Partial<Restaurant> = {
   res_lat: 10.8,
   res_long: 106.7,
   is_open: true,
-  rating_average: 4.5,
 };
 
 const mockRepo = {

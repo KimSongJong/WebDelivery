@@ -9,6 +9,7 @@ import { DriversModule } from './modules/drivers/drivers.module';
 import { RestaurantsModule } from './modules/restaurants/restaurants.module';
 import { MenuGroupsModule } from './modules/menu-groups/menu-groups.module';
 import { MenuItemsModule } from './modules/menu-items/menu-items.module';
+import { RestaurantCategoriesModule } from './modules/restaurant-categories/restaurant-categories.module';
 import { OrdersModule } from './modules/orders/orders.module';
 import { PaymentsModule } from './modules/payments/payments.module';
 import { VouchersModule } from './modules/vouchers/vouchers.module';
@@ -35,6 +36,7 @@ import { RolesGuard } from './common/guards/roles.guard';
     RestaurantsModule,
     MenuGroupsModule,
     MenuItemsModule,
+    RestaurantCategoriesModule,
     OrdersModule,
     PaymentsModule,
     VouchersModule,

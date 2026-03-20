@@ -1,5 +1,13 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
+class RestaurantCategoryDto {
+  @ApiProperty()
+  category_id: string;
+
+  @ApiProperty()
+  name: string;
+}
+
 export class RestaurantResponseDto {
   @ApiProperty()
   restaurant_id: string;
@@ -22,6 +30,9 @@ export class RestaurantResponseDto {
   @ApiProperty()
   is_open: boolean;
 
-  @ApiProperty()
+  @ApiProperty({ example: 0 })
   rating_average: number;
+
+  @ApiPropertyOptional({ type: [RestaurantCategoryDto] })
+  categories?: RestaurantCategoryDto[];
 }

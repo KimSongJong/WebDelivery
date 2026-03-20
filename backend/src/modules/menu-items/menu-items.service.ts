@@ -1,8 +1,13 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 import { MenuItem } from '../../entities/menu-item.entity';
+import { Restaurant } from '../../entities/restaurant.entity';
 import { MenuGroup } from '../../entities/menu-group.entity';
 import { CreateMenuItemDto } from './dto/create-menu-item.dto';
 import { UpdateMenuItemDto } from './dto/update-menu-item.dto';
@@ -13,6 +18,8 @@ export class MenuItemsService {
   constructor(
     @InjectRepository(MenuItem)
     private readonly menuItemRepository: Repository<MenuItem>,
+    @InjectRepository(Restaurant)
+    private readonly restaurantRepository: Repository<Restaurant>,
     @InjectRepository(MenuGroup)
     private readonly menuGroupRepository: Repository<MenuGroup>,
   ) {}
@@ -33,17 +40,9 @@ export class MenuItemsService {
   }
 
   async create(dto: CreateMenuItemDto): Promise<MenuItemResponseDto> {
-    // Validate menu_group_id if provided
-    if (dto.menu_group_id) {
-      const group = await this.menuGroupRepository.findOne({
-        where: { group_id: dto.menu_group_id },
-      });
-      if (!group) {
-        throw new NotFoundException(
-          `Menu group ${dto.menu_group_id} not found`,
-        );
-      }
-    }
+
+    await this.validateRestaurant(dto.restaurant_id);
+    await this.validateMenuGroup(dto.restaurant_id, dto.menu_group_id);
 
     const item = this.menuItemRepository.create({
       item_id: uuidv4().replace(/-/g, '').substring(0, 10),
@@ -61,17 +60,14 @@ export class MenuItemsService {
     });
     if (!item) throw new NotFoundException(`Menu item ${id} not found`);
 
-    // Validate menu_group_id if provided
-    if (dto.menu_group_id) {
-      const group = await this.menuGroupRepository.findOne({
-        where: { group_id: dto.menu_group_id },
-      });
-      if (!group) {
-        throw new NotFoundException(
-          `Menu group ${dto.menu_group_id} not found`,
-        );
-      }
-    }
+
+    const restaurantId = dto.restaurant_id ?? item.restaurant_id;
+    const menuGroupId =
+      dto.menu_group_id !== undefined ? dto.menu_group_id : item.menu_group_id;
+
+    await this.validateRestaurant(restaurantId);
+    await this.validateMenuGroup(restaurantId, menuGroupId);
+
 
     Object.assign(item, dto);
     const updated = await this.menuItemRepository.save(item);
@@ -83,9 +79,8 @@ export class MenuItemsService {
       where: { item_id: id },
     });
     if (!item) throw new NotFoundException(`Menu item ${id} not found`);
-    item.is_available = false;
-    await this.menuItemRepository.save(item);
-    return { message: `Menu item ${id} deactivated successfully` };
+    await this.menuItemRepository.softDelete({ item_id: id });
+    return { message: `Menu item ${id} soft deleted` };
   }
 
   private toDto(i: MenuItem): MenuItemResponseDto {
@@ -99,5 +94,34 @@ export class MenuItemsService {
       price: Number(i.price),
       is_available: i.is_available,
     };
+  }
+
+  private async validateRestaurant(restaurantId: string): Promise<void> {
+    const restaurant = await this.restaurantRepository.findOne({
+      where: { restaurant_id: restaurantId },
+    });
+    if (!restaurant) {
+      throw new BadRequestException(`Restaurant ${restaurantId} does not exist`);
+    }
+  }
+
+  private async validateMenuGroup(
+    restaurantId: string,
+    menuGroupId?: string | null,
+  ): Promise<void> {
+    if (!menuGroupId) return;
+
+    const menuGroup = await this.menuGroupRepository.findOne({
+      where: { group_id: menuGroupId },
+    });
+    if (!menuGroup) {
+      throw new BadRequestException(`Menu group ${menuGroupId} does not exist`);
+    }
+
+    if (menuGroup.restaurant_id !== restaurantId) {
+      throw new BadRequestException(
+        `Menu group ${menuGroupId} does not belong to restaurant ${restaurantId}`,
+      );
+    }
   }
 }

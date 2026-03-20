@@ -5,6 +5,8 @@ import {
   IsBoolean,
   IsNumber,
   MaxLength,
+  IsArray,
+  ArrayUnique,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
@@ -39,4 +41,15 @@ export class CreateRestaurantDto {
   @IsOptional()
   @IsBoolean()
   is_open?: boolean;
+
+  @ApiPropertyOptional({
+    type: [String],
+    example: ['cate001', 'cate002'],
+    description: 'Danh sach category_id de gan voi nha hang',
+  })
+  @IsOptional()
+  @IsArray()
+  @ArrayUnique()
+  @IsString({ each: true })
+  category_ids?: string[];
 }
