@@ -35,7 +35,7 @@ async function bootstrap(): Promise<void> {
 
   // Swagger Documentation
   const config = new DocumentBuilder()
-    .setTitle('ShopeeFood API')
+    .setTitle('Delivery API')
     .setDescription('Hệ thống giao đồ ăn đa cửa hàng - Backend API')
     .setVersion('1.0')
     .addBearerAuth(

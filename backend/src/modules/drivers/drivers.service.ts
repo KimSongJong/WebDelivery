@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
@@ -30,6 +30,14 @@ export class DriversService {
   }
 
   async create(dto: CreateDriverDto): Promise<DriverResponseDto> {
+    const existingDriver = await this.driverRepository.findOne({
+      where: { phone_number: dto.phone_number },
+    });
+
+    if (existingDriver) {
+      throw new ConflictException('Phone number already in use by another driver');
+    }
+
     const driver = this.driverRepository.create({
       driver_id: uuidv4().replace(/-/g, '').substring(0, 10),
       ...dto,
@@ -43,6 +51,17 @@ export class DriversService {
       where: { driver_id: id },
     });
     if (!driver) throw new NotFoundException(`Driver ${id} not found`);
+
+    if (dto.phone_number && dto.phone_number !== driver.phone_number) {
+      const existingDriver = await this.driverRepository.findOne({
+        where: { phone_number: dto.phone_number },
+      });
+
+      if (existingDriver) {
+        throw new ConflictException('Phone number already in use by another driver');
+      }
+    }
+
     Object.assign(driver, dto);
     const updated = await this.driverRepository.save(driver);
     return this.toDto(updated);
