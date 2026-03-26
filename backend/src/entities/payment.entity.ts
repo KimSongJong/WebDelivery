@@ -31,7 +31,7 @@ export class Payment {
   order_id: string;
 
   @Column({ length: 50 })
-  payment_method: string;
+  payment_method: PaymentMethod;
 
   @Column({ length: 20, default: PaymentStatus.PENDING })
   payment_status: PaymentStatus;

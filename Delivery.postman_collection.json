@@ -107,7 +107,9 @@
           "name": "Payments",
           "item": [
             { "name": "Create Payment", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"order_id\": \"{{orderId}}\",\n  \"payment_method\": \"CASH\"\n}" }, "url": { "raw": "{{baseUrl}}/payments", "host": ["{{baseUrl}}"], "path": ["payments"] } }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["const r = pm.response.json();","if (r.data && r.data.payment_id) pm.environment.set('paymentId', r.data.payment_id);"] } }] },
-            { "name": "Get Payment By Order", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/payments/by-order/{{orderId}}", "host": ["{{baseUrl}}"], "path": ["payments", "by-order", "{{orderId}}"] } } }
+            { "name": "Get My Payments", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/payments/my-payments", "host": ["{{baseUrl}}"], "path": ["payments", "my-payments"] } } },
+            { "name": "Get Payment By Order", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/payments/by-order/{{orderId}}", "host": ["{{baseUrl}}"], "path": ["payments", "by-order", "{{orderId}}"] } } },
+            { "name": "Cancel Payment", "request": { "method": "PATCH", "url": { "raw": "{{baseUrl}}/payments/{{paymentId}}/cancel", "host": ["{{baseUrl}}"], "path": ["payments", "{{paymentId}}", "cancel"] } } }
           ]
         },
         {
@@ -196,8 +198,11 @@
         {
           "name": "Payments Management",
           "item": [
+            { "name": "Get All Payments", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/payments?page=1&limit=20", "host": ["{{baseUrl}}"], "path": ["payments"], "query": [{ "key": "page", "value": "1" }, { "key": "limit", "value": "20" }] } } },
+            { "name": "Get Payment By ID", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/payments/{{paymentId}}", "host": ["{{baseUrl}}"], "path": ["payments", "{{paymentId}}"] } } },
             { "name": "Get Payment By Order", "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/payments/by-order/{{orderId}}", "host": ["{{baseUrl}}"], "path": ["payments", "by-order", "{{orderId}}"] } } },
-            { "name": "Confirm Payment", "request": { "method": "PATCH", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"confirmed\": true\n}" }, "url": { "raw": "{{baseUrl}}/payments/{{paymentId}}/confirm", "host": ["{{baseUrl}}"], "path": ["payments", "{{paymentId}}", "confirm"] } } }
+            { "name": "Confirm Payment", "request": { "method": "PATCH", "url": { "raw": "{{baseUrl}}/payments/{{paymentId}}/confirm", "host": ["{{baseUrl}}"], "path": ["payments", "{{paymentId}}", "confirm"] } } },
+            { "name": "Refund Payment", "request": { "method": "PATCH", "url": { "raw": "{{baseUrl}}/payments/{{paymentId}}/refund", "host": ["{{baseUrl}}"], "path": ["payments", "{{paymentId}}", "refund"] } } }
           ]
         }
       ]

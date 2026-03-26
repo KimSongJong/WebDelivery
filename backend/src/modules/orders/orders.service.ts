@@ -10,6 +10,7 @@ import { Order, OrderStatus } from "../../entities/order.entity";
 import { OrderDetail } from "../../entities/order-detail.entity";
 import { MenuItem } from "../../entities/menu-item.entity";
 import { Voucher, DiscountType } from "../../entities/voucher.entity";
+import { Payment, PaymentStatus } from "../../entities/payment.entity";
 import { CreateOrderDto } from "./dto/create-order.dto";
 import { UpdateOrderStatusDto } from "./dto/update-order-status.dto";
 import { OrderResponseDto, OrderDetailItemDto } from "./dto/order-response.dto";
@@ -25,6 +26,8 @@ export class OrdersService {
     private readonly menuItemRepository: Repository<MenuItem>,
     @InjectRepository(Voucher)
     private readonly voucherRepository: Repository<Voucher>,
+    @InjectRepository(Payment)
+    private readonly paymentRepository: Repository<Payment>,
     private readonly dataSource: DataSource,
   ) {}
 
@@ -211,6 +214,24 @@ export class OrdersService {
 
     if (dto.status === OrderStatus.DELIVERED) {
       order.delivered_at = new Date();
+    }
+
+    // Khi hủy đơn → tự động cập nhật payment
+    if (dto.status === OrderStatus.CANCELLED) {
+      const payment = await this.paymentRepository.findOne({
+        where: { order_id: orderId },
+      });
+      if (payment) {
+        if (payment.payment_status === PaymentStatus.COMPLETED) {
+          payment.payment_status = PaymentStatus.REFUNDED;
+          payment.transaction_time = new Date();
+          await this.paymentRepository.save(payment);
+        } else if (payment.payment_status === PaymentStatus.PENDING) {
+          payment.payment_status = PaymentStatus.FAILED;
+          payment.transaction_time = new Date();
+          await this.paymentRepository.save(payment);
+        }
+      }
     }
 
     const updated = await this.orderRepository.save(order);
