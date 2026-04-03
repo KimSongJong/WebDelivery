@@ -13,6 +13,7 @@ import { RestaurantCategoriesModule } from './modules/restaurant-categories/rest
 import { OrdersModule } from './modules/orders/orders.module';
 import { PaymentsModule } from './modules/payments/payments.module';
 import { VouchersModule } from './modules/vouchers/vouchers.module';
+import { RedisModule } from './modules/redis/redis.module';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
@@ -30,6 +31,7 @@ import { RolesGuard } from './common/guards/roles.guard';
       inject: [ConfigService],
       useFactory: getDatabaseConfig,
     }),
+    RedisModule,
     AuthModule,
     UsersModule,
     DriversModule,

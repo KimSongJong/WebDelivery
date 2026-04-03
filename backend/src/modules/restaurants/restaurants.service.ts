@@ -6,6 +6,7 @@ import { Restaurant } from '../../entities/restaurant.entity';
 import { RestaurantCategory } from '../../entities/restaurant-category.entity';
 import { MenuItem } from '../../entities/menu-item.entity';
 import { MenuGroup } from '../../entities/menu-group.entity';
+import { RedisService } from '../redis/redis.service';
 import { CreateRestaurantDto } from './dto/create-restaurant.dto';
 import { UpdateRestaurantDto } from './dto/update-restaurant.dto';
 import { RestaurantResponseDto } from './dto/restaurant-response.dto';
@@ -21,12 +22,23 @@ export class RestaurantsService {
     private readonly menuItemRepository: Repository<MenuItem>,
     @InjectRepository(MenuGroup)
     private readonly menuGroupRepository: Repository<MenuGroup>,
+    private readonly redisService: RedisService,
   ) {}
 
   async findAll(
     search?: string,
     categoryId?: string,
   ): Promise<RestaurantResponseDto[]> {
+    const cacheKey = this.buildListCacheKey(search, categoryId);
+    try {
+      const cached = await this.redisService.getJson<RestaurantResponseDto[]>(
+        cacheKey,
+      );
+      if (cached) return cached;
+    } catch {
+      // If Redis is unavailable, continue with database query.
+    }
+
     const qb = this.restaurantRepository
       .createQueryBuilder('restaurant')
       .leftJoinAndSelect('restaurant.categories', 'category');
@@ -45,7 +57,15 @@ export class RestaurantsService {
     }
 
     const restaurants = await qb.getMany();
-    return restaurants.map((r) => this.toDto(r));
+    const result = restaurants.map((r) => this.toDto(r));
+
+    try {
+      await this.redisService.setJson(cacheKey, result);
+    } catch {
+      // Ignore cache write failures to keep API responsive.
+    }
+
+    return result;
   }
 
   async findOne(id: string): Promise<RestaurantResponseDto> {
@@ -72,6 +92,8 @@ export class RestaurantsService {
       await this.syncRestaurantCategories(saved.restaurant_id, category_ids);
     }
 
+    await this.invalidateRestaurantListCache();
+
     return this.findOne(saved.restaurant_id);
   }
 
@@ -93,6 +115,8 @@ export class RestaurantsService {
       await this.validateCategoryIds(category_ids);
       await this.syncRestaurantCategories(updated.restaurant_id, category_ids);
     }
+
+    await this.invalidateRestaurantListCache();
 
     return this.findOne(updated.restaurant_id);
   }
@@ -119,8 +143,22 @@ export class RestaurantsService {
       await this.restaurantRepository.softDelete({ restaurant_id: id });
     });
 
+    await this.invalidateRestaurantListCache();
+
     return { message: `Restaurant ${id} soft deleted` };
 
+  }
+
+  private buildListCacheKey(search?: string, categoryId?: string): string {
+    return `restaurants:list:${search ?? 'all'}:${categoryId ?? 'all'}`;
+  }
+
+  private async invalidateRestaurantListCache(): Promise<void> {
+    try {
+      await this.redisService.deleteByPrefix('restaurants:list:');
+    } catch {
+      // Ignore cache invalidation failures.
+    }
   }
 
   private toDto(r: Restaurant): RestaurantResponseDto {
